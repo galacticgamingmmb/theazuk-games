@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TheAzuk Stream Games</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+:root{
+  --bg:#0e0e0e;--bg2:#191919;--bg3:#232323;--bg4:#2e2e2e;
+  --red:#ff3333;--red2:#cc1a1a;--green:#22c55e;--green2:#16a34a;
+  --gold:#f5a623;--blue:#3b82f6;
+  --txt:#f2efe8;--txt2:#888;--txt3:#555;
+  --bord:rgba(255,255,255,0.07);--bord2:rgba(255,255,255,0.13);--bord3:rgba(255,255,255,0.22);
+  --rad:8px;--radlg:12px;--radxl:18px;
+}
+body{
+  min-height:100vh;background:var(--bg);color:var(--txt);
+  font-family:'DM Sans',-apple-system,sans-serif;font-size:15px;
+  display:flex;flex-direction:column;align-items:center;padding:2rem 1rem 4rem;
+}
+#app{width:100%;max-width:760px}
+
+/* SCREENS */
+.screen{display:none}
+.screen.active{display:block}
+
+/* TYPOGRAPHY */
+.logo{font-family:'Bebas Neue',Impact,sans-serif;font-size:clamp(48px,11vw,72px);letter-spacing:3px;line-height:1}
+.logo b{color:var(--red)}
+
+/* BUTTONS */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:9px 16px;border:1px solid var(--bord2);border-radius:var(--rad);
+  background:transparent;color:var(--txt);font-family:'DM Sans',sans-serif;
+  font-size:14px;font-weight:500;cursor:pointer;text-decoration:none;
+  transition:background .13s,opacity .13s,transform .1s;
+  user-select:none;white-space:nowrap;-webkit-tap-highlight-color:transparent;
+}
+.btn:hover{background:var(--bg3)}
+.btn:active{transform:scale(0.96)}
+.btn.solid{background:var(--txt);color:#111;border-color:var(--txt)}
+.btn.solid:hover{background:#e0ddd6;border-color:#e0ddd6}
+.btn.red{background:var(--red);color:#fff;border-color:var(--red2)}
+.btn.red:hover{opacity:.85}
+.btn.ghost{color:var(--txt2);border-color:var(--bord)}
+.btn.ghost:hover{color:var(--txt);background:var(--bg3)}
+.btn:disabled{opacity:.35;cursor:default;pointer-events:none}
+.btn-full{width:100%}
+.btn-lg{padding:13px 22px;font-size:16px}
+
+/* INPUTS */
+input[type=text],input[type=number]{
+  width:100%;padding:10px 12px;background:var(--bg3);
+  border:1px solid var(--bord2);border-radius:var(--rad);
+  color:var(--txt);font-family:'DM Sans',sans-serif;font-size:15px;
+  outline:none;transition:border-color .15s;
+}
+input:focus{border-color:var(--bord3)}
+input::placeholder{color:var(--txt3)}
+label.lbl{display:block;font-size:12px;color:var(--txt2);margin-bottom:5px;letter-spacing:.3px}
+
+/* CARD */
+.card{
+  background:var(--bg2);border:1px solid var(--bord);
+  border-radius:var(--radlg);padding:1.25rem;margin-bottom:1rem;
+}
+.card-title{font-size:12px;color:var(--txt2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between}
+
+/* ======================== */
+/* SETUP SCREEN             */
+/* ======================== */
+#setup-header{text-align:center;padding:1.5rem 0 2rem}
+.setup-tagline{font-size:14px;color:var(--txt2);margin-top:.35rem}
+
+/* SETTINGS GRID */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.field{display:flex;flex-direction:column;gap:5px}
+
+/* SETUP STATES */
+.state-loading{text-align:center;padding:3.5rem 1rem}
+.loading-icon{font-size:2rem;line-height:1;margin-bottom:.75rem}
+.loading-text{font-size:14px;color:var(--txt2)}
+
+/* ======================== */
+/* GAME SCREEN              */
+/* ======================== */
+/* HUD */
+.hud{display:flex;align-items:center;gap:1rem;margin-bottom:.9rem}
+.hud-left{flex:1}
+.hud-bar{height:3px;background:var(--bg4);border-radius:99px;overflow:hidden;margin-bottom:5px}
+.hud-bar-fill{height:100%;background:var(--txt);border-radius:99px;transition:width .5s ease}
+.hud-bar-lbl{font-size:12px;color:var(--txt2)}
+.hud-score{text-align:right;flex-shrink:0}
+.hud-score-n{font-family:'Bebas Neue',sans-serif;font-size:32px;line-height:1;color:var(--txt)}
+.hud-score-lbl{font-size:11px;color:var(--txt3);text-align:right}
+
+/* THUMB AREA */
+.thumb-wrap{
+  position:relative;width:100%;aspect-ratio:16/9;
+  border-radius:var(--radlg);overflow:hidden;background:#000;margin-bottom:.75rem;
+}
+.thumb-wrap img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.blur-grid{
+  position:absolute;inset:0;
+  display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(3,1fr);
+  pointer-events:none;
+}
+.tile{
+  backdrop-filter:blur(30px) brightness(0.45);
+  -webkit-backdrop-filter:blur(30px) brightness(0.45);
+  background:rgba(10,10,10,.35);transition:opacity .4s ease;
+}
+.tile.revealed{opacity:0}
+
+/* flash overlays */
+.flash{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .08s;z-index:10;border-radius:var(--radlg)}
+.flash-red{background:rgba(255,40,40,.4)}
+.flash-green{background:rgba(34,197,94,.35)}
+
+/* result overlay */
+.result-overlay{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;
+  padding:1.25rem;
+  background:linear-gradient(to top, rgba(0,0,0,.82) 0%, rgba(0,0,0,.3) 50%, transparent 100%);
+  opacity:0;pointer-events:none;transition:opacity .3s ease;z-index:20;
+}
+.result-overlay.show{opacity:1}
+.result-big{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,7vw,48px);letter-spacing:1px;line-height:1;margin-bottom:4px}
+.result-big.ok{color:var(--green)}
+.result-big.nope{color:var(--red)}
+.result-sub{font-size:14px;font-weight:500;color:rgba(255,255,255,.75)}
+.result-pts{font-size:16px;font-weight:600;color:var(--gold);margin-top:2px}
+
+/* STATS ROW */
+.stats-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;font-size:13px;color:var(--txt2)}
+.wrong-dots{display:flex;gap:5px;align-items:center}
+.wdot{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--bord2);background:transparent;transition:all .2s}
+.wdot.hit{background:var(--red);border-color:var(--red);box-shadow:0 0 5px rgba(255,51,51,.55)}
+
+/* GUESS AREA */
+.guess-area{position:relative;margin-bottom:.65rem}
+.guess-row{display:flex;gap:.5rem}
+.guess-row input{flex:1;font-size:15px;padding:11px 14px}
+.guess-row .btn{padding:11px 20px;font-size:15px}
+
+/* AUTOCOMPLETE — text only, no thumbnail */
+.ac-list{
+  display:none;position:absolute;top:calc(100% + 2px);left:0;right:0;
+  background:var(--bg2);border:1px solid var(--bord2);
+  border-radius:0 0 var(--rad) var(--rad);z-index:50;overflow:hidden;
+  max-height:220px;overflow-y:auto;
+}
+.ac-list.show{display:block}
+.ac-item{
+  padding:10px 14px;cursor:pointer;font-size:14px;
+  transition:background .1s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.ac-item:hover,.ac-item.sel{background:var(--bg3)}
+
+/* ACTIONS */
+.actions{display:flex;gap:.5rem;flex-wrap:wrap}
+.actions-hint{font-size:11px;color:var(--txt3);margin-left:2px}
+
+/* NEXT BTN */
+#next-btn{display:none;margin-top:.75rem}
+
+/* SHAKE */
+@keyframes shake{0%,100%{transform:translateX(0)}18%{transform:translateX(-8px)}36%{transform:translateX(7px)}54%{transform:translateX(-5px)}72%{transform:translateX(4px)}}
+.shake{animation:shake .34s ease}
+
+/* ======================== */
+/* RESULTS SCREEN           */
+/* ======================== */
+.results-top{text-align:center;padding:1.5rem 0 2rem}
+.results-score-big{font-family:'Bebas Neue',sans-serif;font-size:clamp(72px,16vw,110px);line-height:1;color:var(--txt)}
+.results-score-lbl{font-size:15px;color:var(--txt2)}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:.5rem;margin-bottom:1.5rem}
+.rcard{background:var(--bg2);border:1px solid var(--bord);border-radius:var(--rad);overflow:hidden}
+.rcard img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+.rcard-info{padding:7px 8px 8px}
+.rcard-title{font-size:12px;font-weight:500;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
+.rcard-badge{font-size:11px;font-weight:600}
+.rcard-badge.ok{color:var(--green)}
+.rcard-badge.fail{color:var(--red)}
+.results-actions{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:var(--bg4)}
+
+/* RESPONSIVE */
+@media(max-width:480px){
+  body{padding:1rem .75rem 3rem}
+  .settings-grid{grid-template-columns:1fr}
+  .hud-score-n{font-size:26px}
+  .actions{gap:.4rem}
+  .btn{font-size:13px;padding:8px 12px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ============ SETUP SCREEN ============ -->
+<div id="screen-setup" class="screen active">
+
+  <div id="setup-header">
+    <div class="logo">TheAzuk<b> Stream Games</b></div>
+    <p class="setup-tagline">¿Podés adivinar el video por su miniatura?</p>
+  </div>
+
+  <!-- Estado: cargando -->
+  <div id="state-loading" class="state-loading">
+    <div class="loading-icon">⏳</div>
+    <p class="loading-text">Cargando videos...</p>
+  </div>
+
+  <!-- Estado: sin videos -->
+  <div id="state-empty" style="display:none">
+    <div class="card" style="text-align:center;padding:2.5rem 1.25rem">
+      <div style="font-size:2.5rem;line-height:1;margin-bottom:.75rem">📭</div>
+      <p style="font-size:15px;font-weight:600;margin-bottom:.4rem">Sin videos disponibles</p>
+      <p style="font-size:13px;color:var(--txt2);line-height:1.6">
+        El administrador todavía no cargó miniaturas.<br>Volvé a intentarlo más tarde.
+      </p>
+      <button class="btn ghost" style="margin-top:1.25rem" onclick="loadVideos()">↺ Reintentar</button>
+    </div>
+  </div>
+
+  <!-- Estado: listo para jugar -->
+  <div id="state-ready" style="display:none">
+    <div class="card">
+      <div class="card-title">Videos disponibles</div>
+      <div style="display:flex;align-items:center;gap:.85rem">
+        <div style="font-size:2rem;line-height:1;flex-shrink:0">🎬</div>
+        <div>
+          <div style="font-size:15px;font-weight:600">
+            <span id="vid-count">0</span> miniaturas listas
+          </div>
+          <div style="font-size:12px;color:var(--txt2);margin-top:3px">Los videos se seleccionan al azar en cada partida</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Configuración de partida</div>
+      <div class="settings-grid">
+        <div class="field">
+          <label class="lbl">Videos por partida</label>
+          <input type="number" id="cfg-rounds" value="5" min="1" max="30" />
+        </div>
+        <div class="field">
+          <label class="lbl">Intentos por video</label>
+          <input type="number" id="cfg-attempts" value="5" min="2" max="8" />
+        </div>
+      </div>
+    </div>
+
+    <button class="btn solid btn-full btn-lg" onclick="startGame()">¡Jugar! →</button>
+  </div>
+
+</div>
+
+<!-- ============ GAME SCREEN ============ -->
+<div id="screen-game" class="screen">
+
+  <!-- HUD -->
+  <div class="hud">
+    <div class="hud-left">
+      <div class="hud-bar"><div class="hud-bar-fill" id="hud-fill" style="width:0%"></div></div>
+      <div class="hud-bar-lbl" id="hud-lbl">Video 1 de 5</div>
+    </div>
+    <div class="hud-score">
+      <div class="hud-score-n" id="hud-pts">0</div>
+      <div class="hud-score-lbl">puntos</div>
+    </div>
+  </div>
+
+  <!-- THUMBNAIL + BLUR GRID -->
+  <div class="thumb-wrap" id="thumb-wrap">
+    <img id="game-img" alt="" />
+    <div class="blur-grid" id="blur-grid"></div>
+    <div class="flash flash-red" id="fl-red"></div>
+    <div class="flash flash-green" id="fl-green"></div>
+    <div class="result-overlay" id="result-overlay">
+      <div class="result-big" id="res-label"></div>
+      <div class="result-sub" id="res-sub"></div>
+      <div class="result-pts" id="res-pts"></div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="wrong-dots" id="wdots"></div>
+      <span id="wlabel" style="font-size:12px"></span>
+    </div>
+    <span id="tiles-lbl" style="font-size:12px">0 / 12 zonas vistas</span>
+  </div>
+
+  <!-- GUESS INPUT -->
+  <div class="guess-area" id="guess-area">
+    <div class="guess-row">
+      <input type="text" id="guess-inp" placeholder="¿Cuál es el video?" autocomplete="off"
+             oninput="onGuessInput()" onkeydown="onGuessKey(event)" />
+      <button class="btn solid" id="guess-btn" onclick="submitGuess()">Adivinar</button>
+    </div>
+    <div class="ac-list" id="ac-list"></div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="actions" id="actions">
+    <button class="btn" id="hint-btn" onclick="useHint()">
+      💡 Revelar zona <span class="actions-hint">(-100 pts)</span>
+    </button>
+    <button class="btn red" id="giveup-btn" onclick="giveUp()">Me rindo</button>
+    <button class="btn ghost" onclick="confirmExit()" style="margin-left:auto;font-size:13px">✕</button>
+  </div>
+
+  <!-- NEXT BUTTON -->
+  <button class="btn solid btn-full btn-lg" id="next-btn" onclick="nextRound()"></button>
+
+</div>
+
+<!-- ============ RESULTS SCREEN ============ -->
+<div id="screen-results" class="screen">
+  <div class="results-top">
+    <div class="logo" style="margin-bottom:.25rem">RESULTADO</div>
+    <div class="results-score-big" id="res-total">0</div>
+    <div class="results-score-lbl">puntos totales</div>
+  </div>
+  <div class="results-grid" id="results-grid"></div>
+  <div class="results-actions">
+    <button class="btn solid btn-lg" onclick="replayGame()">Jugar de nuevo</button>
+    <button class="btn btn-lg" onclick="backToSetup()">Configurar</button>
+  </div>
+</div>
+
+</div><!-- #app -->
+
+<script>
+// ===================== DATA =====================
+let videos = [];
+
+// Game state
+let gameQueue = [];
+let currentRound = 0;
+let totalScore = 0;
+let roundResults = [];
+
+// Per-round
+let wrongCount = 0;
+let penalty = 0;
+let tilesRevealed = 0;
+let revealOrder = [];
+let isGuessing = false;
+let maxAttempts = 5;
+
+// Constants
+const TOTAL_TILES = 12;
+const BASE_PTS = 1000;
+const WRONG_PENALTY = 150;
+const HINT_PENALTY = 100;
+const TILES_PER_WRONG = 2;
+const TILES_PER_HINT = 1;
+
+// Grid: corners first → edges → center (4×3)
+const CORNERS = [0, 3, 8, 11];
+const EDGES   = [1, 2, 9, 10, 4, 7];
+const CENTER  = [5, 6];
+
+function makeRevealOrder() {
+  const shuffle = a => [...a].sort(() => Math.random() - .5);
+  return [...shuffle(CORNERS), ...shuffle(EDGES), ...shuffle(CENTER)];
+}
+
+// ===================== LOAD VIDEOS =====================
+async function loadVideos() {
+  showSetupState('loading');
+  videos = [];
+
+  // 1) Try fetching data.json from the same origin (GitHub Pages)
+  try {
+    const res = await fetch('./data.json');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (Array.isArray(data) && data.length) {
+      videos = data;
+      showSetupState('ready');
+      return;
+    }
+  } catch(e) {
+    // fetch failed or empty — fall through to localStorage
+  }
+
+  // 2) Fallback: localStorage (useful for local testing)
+  try {
+    const saved = localStorage.getItem('thumbblind_videos');
+    if (saved) {
+      const data = JSON.parse(saved);
+      if (Array.isArray(data) && data.length) {
+        videos = data;
+        showSetupState('ready');
+        return;
+      }
+    }
+  } catch(e) {}
+
+  // 3) Nothing found
+  showSetupState('empty');
+}
+
+function showSetupState(state) {
+  document.getElementById('state-loading').style.display = state === 'loading' ? 'block' : 'none';
+  document.getElementById('state-empty').style.display   = state === 'empty'   ? 'block' : 'none';
+  document.getElementById('state-ready').style.display   = state === 'ready'   ? 'block' : 'none';
+
+  if (state === 'ready') {
+    document.getElementById('vid-count').textContent = videos.length;
+    const cfg = document.getElementById('cfg-rounds');
+    cfg.max   = videos.length;
+    cfg.value = Math.min(5, videos.length);
+  }
+}
+
+// ===================== GAME START =====================
+function startGame() {
+  if (!videos.length) return;
+
+  const rounds = Math.min(parseInt(document.getElementById('cfg-rounds').value) || 5, videos.length);
+  maxAttempts = parseInt(document.getElementById('cfg-attempts').value) || 5;
+
+  gameQueue = [...videos].sort(() => Math.random() - .5).slice(0, rounds);
+  currentRound = 0;
+  totalScore = 0;
+  roundResults = [];
+
+  showScreen('screen-game');
+  loadRound();
+}
+
+// ===================== ROUND =====================
+function loadRound() {
+  const v = gameQueue[currentRound];
+  wrongCount = 0;
+  penalty = 0;
+  tilesRevealed = 0;
+  revealOrder = makeRevealOrder();
+  isGuessing = true;
+
+  // HUD
+  const pct = Math.round((currentRound / gameQueue.length) * 100);
+  document.getElementById('hud-fill').style.width = pct + '%';
+  document.getElementById('hud-lbl').textContent = `Video ${currentRound + 1} de ${gameQueue.length}`;
+  document.getElementById('hud-pts').textContent = totalScore;
+
+  // Image
+  document.getElementById('game-img').src = v.image;
+
+  // Grid
+  buildGrid();
+
+  // Dots
+  renderWrongDots();
+  updateTilesLbl();
+
+  // Overlay
+  document.getElementById('result-overlay').classList.remove('show');
+
+  // Guess area
+  document.getElementById('guess-inp').value = '';
+  document.getElementById('guess-inp').disabled = false;
+  document.getElementById('guess-area').style.display = 'block';
+  document.getElementById('actions').style.display = 'flex';
+  document.getElementById('next-btn').style.display = 'none';
+  document.getElementById('guess-btn').disabled = false;
+  document.getElementById('hint-btn').disabled = false;
+  document.getElementById('giveup-btn').disabled = false;
+  document.getElementById('ac-list').classList.remove('show');
+
+  setTimeout(() => document.getElementById('guess-inp').focus(), 80);
+}
+
+function buildGrid() {
+  const grid = document.getElementById('blur-grid');
+  grid.innerHTML = '';
+  for (let i = 0; i < TOTAL_TILES; i++) {
+    const t = document.createElement('div');
+    t.className = 'tile';
+    t.id = 'tile-' + i;
+    grid.appendChild(t);
+  }
+}
+
+function revealTile(idx) {
+  const t = document.getElementById('tile-' + idx);
+  if (!t || t.classList.contains('revealed')) return false;
+  t.classList.add('revealed');
+  tilesRevealed++;
+  updateTilesLbl();
+  return true;
+}
+
+function revealNext(n) {
+  let done = 0;
+  for (let i = 0; i < revealOrder.length && done < n; i++) {
+    if (revealTile(revealOrder[i])) done++;
+  }
+}
+
+function revealAll() {
+  for (let i = 0; i < TOTAL_TILES; i++) revealTile(i);
+}
+
+function renderWrongDots() {
+  document.getElementById('wdots').innerHTML =
+    Array.from({ length: maxAttempts }, (_, i) =>
+      `<div class="wdot ${i < wrongCount ? 'hit' : ''}"></div>`
+    ).join('');
+  document.getElementById('wlabel').textContent =
+    wrongCount > 0 ? `${wrongCount} fallo${wrongCount > 1 ? 's' : ''}` : '';
+}
+
+function updateTilesLbl() {
+  document.getElementById('tiles-lbl').textContent = `${tilesRevealed} / ${TOTAL_TILES} zonas vistas`;
+}
+
+// ===================== GUESSING =====================
+function onGuessInput() {
+  const q = document.getElementById('guess-inp').value.trim().toLowerCase();
+  const ac = document.getElementById('ac-list');
+  if (q.length < 1) { ac.classList.remove('show'); return; }
+
+  const matches = gameQueue.filter(v => v.title.toLowerCase().includes(q)).slice(0, 6);
+  if (!matches.length) { ac.classList.remove('show'); return; }
+
+  // Solo muestra el título — sin miniatura
+  ac.innerHTML = matches.map(v => `
+    <div class="ac-item" onclick="pickSuggestion(${v.id})">
+      ${esc(v.title)}
+    </div>
+  `).join('');
+  ac.classList.add('show');
+}
+
+function onGuessKey(e) {
+  if (e.key === 'Enter') submitGuess();
+  if (e.key === 'Escape') document.getElementById('ac-list').classList.remove('show');
+}
+
+function pickSuggestion(id) {
+  const v = gameQueue.find(x => x.id === id);
+  if (!v) return;
+  document.getElementById('guess-inp').value = v.title;
+  document.getElementById('ac-list').classList.remove('show');
+  submitGuess();
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#guess-area')) document.getElementById('ac-list').classList.remove('show');
+});
+
+function submitGuess() {
+  if (!isGuessing) return;
+  const raw = document.getElementById('guess-inp').value.trim();
+  if (!raw) return;
+  document.getElementById('ac-list').classList.remove('show');
+
+  const current = gameQueue[currentRound];
+  const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s]/g, '').trim();
+
+  if (norm(raw) === norm(current.title)) {
+    onCorrect();
+  } else {
+    onWrong();
+  }
+}
+
+function onCorrect() {
+  isGuessing = false;
+  const pts = Math.max(50, BASE_PTS - penalty);
+  totalScore += pts;
+  document.getElementById('hud-pts').textContent = totalScore;
+
+  flash('green');
+  revealAll();
+
+  const ov = document.getElementById('result-overlay');
+  document.getElementById('res-label').textContent = '¡CORRECTO!';
+  document.getElementById('res-label').className = 'result-big ok';
+  document.getElementById('res-sub').textContent = gameQueue[currentRound].title;
+  document.getElementById('res-pts').textContent = '+' + pts + ' puntos';
+  ov.classList.add('show');
+
+  roundResults.push({ v: gameQueue[currentRound], correct: true, pts });
+  endRound();
+}
+
+function onWrong() {
+  wrongCount++;
+  penalty += WRONG_PENALTY;
+  renderWrongDots();
+  revealNext(TILES_PER_WRONG);
+  document.getElementById('guess-inp').value = '';
+
+  const wrap = document.getElementById('thumb-wrap');
+  wrap.classList.remove('shake');
+  void wrap.offsetWidth;
+  wrap.classList.add('shake');
+  flash('red');
+
+  if (wrongCount >= maxAttempts) giveUp();
+}
+
+function useHint() {
+  if (!isGuessing) return;
+  penalty += HINT_PENALTY;
+  revealNext(TILES_PER_HINT);
+}
+
+function giveUp() {
+  if (!isGuessing) return;
+  isGuessing = false;
+  revealAll();
+
+  const ov = document.getElementById('result-overlay');
+  document.getElementById('res-label').textContent = 'ERA...';
+  document.getElementById('res-label').className = 'result-big nope';
+  document.getElementById('res-sub').textContent = gameQueue[currentRound].title;
+  document.getElementById('res-pts').textContent = '0 puntos';
+  ov.classList.add('show');
+
+  roundResults.push({ v: gameQueue[currentRound], correct: false, pts: 0 });
+  endRound();
+}
+
+function flash(color) {
+  const el = document.getElementById('fl-' + color);
+  el.style.opacity = '1';
+  setTimeout(() => el.style.opacity = '0', 220);
+}
+
+function endRound() {
+  document.getElementById('guess-area').style.display = 'none';
+  document.getElementById('actions').style.display = 'none';
+
+  const last = currentRound >= gameQueue.length - 1;
+  const btn = document.getElementById('next-btn');
+  btn.textContent = last ? 'Ver resultados →' : 'Siguiente video →';
+  btn.style.display = 'block';
+  if (last) document.getElementById('hud-fill').style.width = '100%';
+}
+
+function nextRound() {
+  currentRound++;
+  if (currentRound >= gameQueue.length) showResults();
+  else loadRound();
+}
+
+// ===================== RESULTS =====================
+function showResults() {
+  document.getElementById('res-total').textContent = totalScore;
+
+  document.getElementById('results-grid').innerHTML = roundResults.map(r => `
+    <div class="rcard">
+      <img src="${r.v.image}" alt="" />
+      <div class="rcard-info">
+        <div class="rcard-title">${esc(r.v.title)}</div>
+        <div class="rcard-badge ${r.correct ? 'ok' : 'fail'}">
+          ${r.correct ? '✓ +' + r.pts + ' pts' : '✗ 0 pts'}
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  showScreen('screen-results');
+}
+
+function replayGame() {
+  startGame();
+}
+
+function backToSetup() {
+  showScreen('screen-setup');
+}
+
+// ===================== NAVIGATION =====================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function confirmExit() {
+  if (confirm('¿Salir de la partida?')) showScreen('screen-setup');
+}
+
+// ===================== UTILS =====================
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Init
+loadVideos();
+</script>
+</body>
+</html>
