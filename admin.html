@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ThumbBlind — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+:root{
+  --bg:#0e0e0e;--bg2:#191919;--bg3:#232323;--bg4:#2e2e2e;
+  --red:#ff3333;--red2:#cc1a1a;--green:#22c55e;--green2:#16a34a;
+  --gold:#f5a623;--txt:#f2efe8;--txt2:#888;--txt3:#555;
+  --bord:rgba(255,255,255,0.07);--bord2:rgba(255,255,255,0.13);--bord3:rgba(255,255,255,0.22);
+  --rad:8px;--radlg:12px;
+}
+body{
+  min-height:100vh;background:var(--bg);color:var(--txt);
+  font-family:'DM Sans',-apple-system,sans-serif;font-size:15px;
+  display:flex;flex-direction:column;align-items:center;padding:2rem 1rem 4rem;
+}
+#app{width:100%;max-width:760px}
+
+/* TYPOGRAPHY */
+.logo{font-family:'Bebas Neue',Impact,sans-serif;font-size:clamp(48px,11vw,72px);letter-spacing:3px;line-height:1}
+.logo b{color:var(--red)}
+
+/* ADMIN BADGE */
+.admin-badge{
+  background:var(--gold);color:#111;
+  font-family:'DM Sans',sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;
+  padding:3px 8px;border-radius:4px;align-self:flex-end;margin-bottom:10px;
+}
+
+/* BUTTONS */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:9px 16px;border:1px solid var(--bord2);border-radius:var(--rad);
+  background:transparent;color:var(--txt);font-family:'DM Sans',sans-serif;
+  font-size:14px;font-weight:500;cursor:pointer;text-decoration:none;
+  transition:background .13s,opacity .13s,transform .1s;
+  user-select:none;white-space:nowrap;-webkit-tap-highlight-color:transparent;
+}
+.btn:hover{background:var(--bg3)}
+.btn:active{transform:scale(0.96)}
+.btn.solid{background:var(--txt);color:#111;border-color:var(--txt)}
+.btn.solid:hover{background:#e0ddd6;border-color:#e0ddd6}
+.btn.ghost{color:var(--txt2);border-color:var(--bord)}
+.btn.ghost:hover{color:var(--txt);background:var(--bg3)}
+.btn:disabled{opacity:.35;cursor:default;pointer-events:none}
+.btn-full{width:100%}
+
+/* INPUTS */
+input[type=text]{
+  width:100%;padding:10px 12px;background:var(--bg3);
+  border:1px solid var(--bord2);border-radius:var(--rad);
+  color:var(--txt);font-family:'DM Sans',sans-serif;font-size:15px;
+  outline:none;transition:border-color .15s;
+}
+input:focus{border-color:var(--bord3)}
+input::placeholder{color:var(--txt3)}
+
+/* CARD */
+.card{
+  background:var(--bg2);border:1px solid var(--bord);
+  border-radius:var(--radlg);padding:1.25rem;margin-bottom:1rem;
+}
+.card-title{
+  font-size:12px;color:var(--txt2);text-transform:uppercase;letter-spacing:.7px;
+  margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;
+}
+
+/* HEADER */
+#setup-header{text-align:center;padding:1.5rem 0 2rem}
+.setup-tagline{font-size:14px;color:var(--txt2);margin-top:.35rem}
+
+/* UPLOAD ZONE */
+.upload-zone{
+  border:2px dashed var(--bord2);border-radius:var(--radlg);
+  padding:2.5rem 1rem;text-align:center;cursor:pointer;
+  transition:border-color .15s,background .15s;margin-bottom:.75rem;
+}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--bord3);background:var(--bg3)}
+.upload-icon{font-size:36px;line-height:1;margin-bottom:.6rem}
+.upload-text{font-size:14px;color:var(--txt2)}
+.upload-text strong{color:var(--txt)}
+.upload-hint{font-size:12px;color:var(--txt3);margin-top:.3rem}
+#file-input{display:none}
+
+/* PREVIEW */
+.preview-wrap{display:none;position:relative;margin-bottom:.75rem;border-radius:var(--rad);overflow:hidden}
+.preview-wrap img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+.preview-change{
+  position:absolute;top:8px;right:8px;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);
+  color:var(--txt);border:1px solid var(--bord2);border-radius:var(--rad);
+  padding:4px 10px;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:500;
+}
+.preview-change:hover{background:rgba(0,0,0,.9)}
+.add-row{display:flex;gap:.5rem;margin-top:.5rem}
+.add-row input{flex:1}
+
+/* VIDEO LIST */
+.vlist{display:flex;flex-direction:column;gap:.4rem}
+.vitem{
+  display:flex;align-items:center;gap:.75rem;
+  background:var(--bg3);border:1px solid var(--bord);
+  border-radius:var(--rad);padding:8px 10px;animation:fadein .2s ease;
+}
+@keyframes fadein{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+.vitem-thumb{width:64px;height:36px;object-fit:cover;border-radius:4px;flex-shrink:0;background:var(--bg4)}
+.vitem-title{flex:1;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vitem-n{font-size:11px;color:var(--txt3);flex-shrink:0}
+.vitem-del{background:none;border:none;cursor:pointer;color:var(--txt3);padding:5px 7px;border-radius:4px;font-size:18px;line-height:1;transition:color .12s}
+.vitem-del:hover{color:var(--red)}
+.empty-state{text-align:center;padding:2rem;color:var(--txt3);font-size:14px;border:1px dashed var(--bord);border-radius:var(--rad)}
+.vlist-hint{font-size:11px;color:var(--txt3);text-align:center;margin-top:.75rem}
+
+/* DEPLOY STEPS */
+.deploy-steps{display:flex;flex-direction:column;gap:.65rem;margin-bottom:1.1rem}
+.step{display:flex;align-items:flex-start;gap:.75rem;font-size:13px;color:var(--txt2);line-height:1.55}
+.step-n{
+  min-width:22px;height:22px;border-radius:50%;background:var(--bg4);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:var(--txt);flex-shrink:0;margin-top:1px;
+}
+.step code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-size:12px;color:var(--txt);font-family:monospace}
+.export-row{display:flex;gap:.5rem;flex-wrap:wrap}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);
+  background:var(--green2);color:#fff;padding:10px 20px;border-radius:var(--rad);
+  font-size:14px;font-weight:600;z-index:9999;pointer-events:none;
+  animation:toastin .2s ease;
+}
+@keyframes toastin{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:var(--bg4)}
+
+@media(max-width:480px){
+  body{padding:1rem .75rem 3rem}
+  .btn{font-size:13px;padding:8px 12px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="setup-header">
+    <div style="display:flex;align-items:center;justify-content:center;gap:10px">
+      <div class="logo">THUMB<b>BLIND</b></div>
+      <span class="admin-badge">Admin</span>
+    </div>
+    <p class="setup-tagline">Panel de carga de miniaturas</p>
+  </div>
+
+  <!-- ADD VIDEO -->
+  <div class="card">
+    <div class="card-title">Agregar video</div>
+
+    <div class="upload-zone" id="upload-zone" onclick="triggerUpload()">
+      <div class="upload-icon">🖼️</div>
+      <p class="upload-text"><strong>Arrastrá o hacé clic</strong> para subir miniatura</p>
+      <p class="upload-hint">JPG · PNG · WEBP</p>
+    </div>
+    <input type="file" id="file-input" accept="image/*" onchange="onFileSelected(event)" />
+
+    <div class="preview-wrap" id="preview-wrap">
+      <img id="preview-img" alt="preview" />
+      <button class="preview-change" onclick="triggerUpload()">Cambiar imagen</button>
+    </div>
+
+    <div class="add-row">
+      <input type="text" id="inp-title" placeholder="Título exacto del video..." />
+      <button class="btn solid" onclick="addVideo()">Agregar</button>
+    </div>
+  </div>
+
+  <!-- VIDEO LIST -->
+  <div class="card">
+    <div class="card-title">
+      Videos guardados
+      <div style="display:flex;align-items:center;gap:.5rem">
+        <span id="vcount" style="background:var(--bg4);padding:2px 8px;border-radius:99px;font-size:11px">0</span>
+        <button class="btn ghost" id="clear-btn" onclick="clearAll()" style="font-size:11px;padding:3px 10px" disabled>Limpiar todo</button>
+      </div>
+    </div>
+    <div class="vlist" id="vlist">
+      <div class="empty-state">No hay videos. ¡Agregá uno arriba!</div>
+    </div>
+    <p class="vlist-hint">Los videos se guardan en este navegador. Exportá el JSON para no perder tu trabajo.</p>
+  </div>
+
+  <!-- PUBLISH -->
+  <div class="card">
+    <div class="card-title">Publicar en GitHub Pages</div>
+    <div class="deploy-steps">
+      <div class="step">
+        <span class="step-n">1</span>
+        <span>Hacé clic en <strong style="color:var(--txt)">Exportar data.json</strong> y guardá el archivo descargado</span>
+      </div>
+      <div class="step">
+        <span class="step-n">2</span>
+        <span>Subí <code>data.json</code> a la <strong style="color:var(--txt)">raíz</strong> de tu repositorio (donde está <code>index.html</code>)</span>
+      </div>
+      <div class="step">
+        <span class="step-n">3</span>
+        <span>¡Listo! Los jugadores verán tus videos automáticamente</span>
+      </div>
+    </div>
+    <div class="export-row">
+      <button class="btn solid" id="export-btn" onclick="exportJSON()" disabled>⬇ Exportar data.json</button>
+      <button class="btn ghost" onclick="triggerImport()">⬆ Importar data.json</button>
+      <input type="file" id="import-input" accept=".json,application/json" style="display:none" onchange="importJSON(event)">
+    </div>
+  </div>
+
+  <a href="index.html" class="btn ghost btn-full">← Ir al juego</a>
+
+</div><!-- #app -->
+
+<script>
+let videos = [];
+let pendingImage = null;
+
+// ===================== STORAGE =====================
+function loadFromStorage() {
+  try {
+    const saved = localStorage.getItem('thumbblind_videos');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) videos = parsed;
+    }
+  } catch(e) {}
+}
+
+function saveToStorage() {
+  try {
+    localStorage.setItem('thumbblind_videos', JSON.stringify(videos));
+  } catch(e) {
+    if (e.name === 'QuotaExceededError') {
+      alert('⚠️ Almacenamiento local lleno.\nNo se pudo guardar. Exportá el JSON y eliminá algunos videos para liberar espacio.');
+    }
+  }
+}
+
+// ===================== UPLOAD =====================
+function triggerUpload() {
+  document.getElementById('file-input').click();
+}
+
+function onFileSelected(e) {
+  const file = e.target.files[0];
+  if (file) processFile(file);
+  e.target.value = '';
+}
+
+function processFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    resizeImage(e.target.result, 720, 405, b64 => {
+      pendingImage = b64;
+      document.getElementById('preview-img').src = b64;
+      document.getElementById('preview-wrap').style.display = 'block';
+      document.getElementById('upload-zone').style.display = 'none';
+      document.getElementById('inp-title').focus();
+    });
+  };
+  reader.readAsDataURL(file);
+}
+
+function resizeImage(src, maxW, maxH, cb) {
+  const img = new Image();
+  img.onload = () => {
+    const scale = Math.min(maxW / img.width, maxH / img.height, 1);
+    const w = Math.round(img.width * scale);
+    const h = Math.round(img.height * scale);
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    c.getContext('2d').drawImage(img, 0, 0, w, h);
+    cb(c.toDataURL('image/jpeg', 0.88));
+  };
+  img.src = src;
+}
+
+// Drag & drop
+const uploadZone = document.getElementById('upload-zone');
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith('image/')) processFile(f);
+});
+
+function addVideo() {
+  const title = document.getElementById('inp-title').value.trim();
+  if (!pendingImage) { pulse('upload-zone'); return; }
+  if (!title) { document.getElementById('inp-title').focus(); return; }
+
+  videos.push({ id: Date.now(), title, image: pendingImage });
+  pendingImage = null;
+
+  document.getElementById('inp-title').value = '';
+  document.getElementById('preview-wrap').style.display = 'none';
+  document.getElementById('upload-zone').style.display = 'block';
+
+  saveToStorage();
+  renderVList();
+  updateBtns();
+}
+
+document.getElementById('inp-title').addEventListener('keydown', e => { if (e.key === 'Enter') addVideo(); });
+
+function removeVideo(id) {
+  videos = videos.filter(v => v.id !== id);
+  saveToStorage();
+  renderVList();
+  updateBtns();
+}
+
+function clearAll() {
+  if (!videos.length) return;
+  if (!confirm(`¿Eliminar los ${videos.length} video${videos.length !== 1 ? 's' : ''}? Esta acción no se puede deshacer.`)) return;
+  videos = [];
+  saveToStorage();
+  renderVList();
+  updateBtns();
+}
+
+function renderVList() {
+  const list = document.getElementById('vlist');
+  document.getElementById('vcount').textContent = videos.length;
+  if (!videos.length) {
+    list.innerHTML = '<div class="empty-state">No hay videos. ¡Agregá uno arriba!</div>';
+    return;
+  }
+  list.innerHTML = videos.map((v, i) => `
+    <div class="vitem">
+      <img class="vitem-thumb" src="${v.image}" alt="" />
+      <span class="vitem-title">${esc(v.title)}</span>
+      <span class="vitem-n">#${i + 1}</span>
+      <button class="vitem-del" onclick="removeVideo(${v.id})" title="Eliminar">×</button>
+    </div>
+  `).join('');
+}
+
+function updateBtns() {
+  const has = videos.length > 0;
+  document.getElementById('export-btn').disabled = !has;
+  document.getElementById('clear-btn').disabled = !has;
+}
+
+function pulse(id) {
+  const el = document.getElementById(id);
+  el.style.borderColor = 'var(--red)';
+  setTimeout(() => el.style.borderColor = '', 700);
+}
+
+// ===================== EXPORT / IMPORT =====================
+function exportJSON() {
+  if (!videos.length) return;
+  const blob = new Blob([JSON.stringify(videos)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'data.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('✓ data.json exportado');
+}
+
+function triggerImport() {
+  document.getElementById('import-input').click();
+}
+
+function importJSON(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = evt => {
+    try {
+      const data = JSON.parse(evt.target.result);
+      if (!Array.isArray(data)) throw new Error('not array');
+      if (!data.every(v => v.id !== undefined && v.title && v.image)) throw new Error('invalid');
+      const n = data.length;
+      if (!confirm(`¿Importar ${n} video${n !== 1 ? 's' : ''}? Esto reemplazará los videos actuales.`)) return;
+      videos = data;
+      saveToStorage();
+      renderVList();
+      updateBtns();
+      showToast(`✓ ${n} video${n !== 1 ? 's' : ''} importado${n !== 1 ? 's' : ''}`);
+    } catch(err) {
+      alert('Archivo JSON inválido o con formato incorrecto.');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => {
+    t.style.transition = 'opacity .3s';
+    t.style.opacity = '0';
+    setTimeout(() => t.remove(), 320);
+  }, 2200);
+}
+
+// ===================== UTILS =====================
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Init
+loadFromStorage();
+renderVList();
+updateBtns();
+</script>
+</body>
+</html>
