@@ -62,6 +62,7 @@ input[type=text]{
 }
 input:focus{border-color:var(--bord3)}
 input::placeholder{color:var(--txt3)}
+label.lbl{display:block;font-size:12px;color:var(--txt2);margin-bottom:5px;letter-spacing:.3px}
 
 /* CARD */
 .card{
@@ -77,28 +78,31 @@ input::placeholder{color:var(--txt3)}
 #setup-header{text-align:center;padding:1.5rem 0 2rem}
 .setup-tagline{font-size:14px;color:var(--txt2);margin-top:.35rem}
 
-/* UPLOAD ZONE */
-.upload-zone{
-  border:2px dashed var(--bord2);border-radius:var(--radlg);
-  padding:2.5rem 1rem;text-align:center;cursor:pointer;
-  transition:border-color .15s,background .15s;margin-bottom:.75rem;
+/* FILENAME PREVIEW */
+.preview-area{
+  position:relative;border-radius:var(--rad);overflow:hidden;
+  margin-bottom:.75rem;background:var(--bg3);
 }
-.upload-zone:hover,.upload-zone.drag{border-color:var(--bord3);background:var(--bg3)}
-.upload-icon{font-size:36px;line-height:1;margin-bottom:.6rem}
-.upload-text{font-size:14px;color:var(--txt2)}
-.upload-text strong{color:var(--txt)}
-.upload-hint{font-size:12px;color:var(--txt3);margin-top:.3rem}
-#file-input{display:none}
+.preview-area img{
+  width:100%;aspect-ratio:16/9;object-fit:cover;display:block;
+}
+.preview-badge{
+  position:absolute;top:8px;right:8px;
+  font-size:11px;font-weight:700;padding:3px 9px;border-radius:4px;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+}
+.preview-badge.ok{background:rgba(22,163,74,.92);color:#fff}
+.preview-badge.err{background:rgba(204,26,26,.92);color:#fff}
 
-/* PREVIEW */
-.preview-wrap{display:none;position:relative;margin-bottom:.75rem;border-radius:var(--rad);overflow:hidden}
-.preview-wrap img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
-.preview-change{
-  position:absolute;top:8px;right:8px;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);
-  color:var(--txt);border:1px solid var(--bord2);border-radius:var(--rad);
-  padding:4px 10px;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:500;
+/* FILE FOLDER HINT */
+.folder-hint{
+  display:inline-flex;align-items:center;gap:5px;
+  background:var(--bg4);border:1px solid var(--bord2);border-radius:4px;
+  padding:2px 8px;font-size:11px;color:var(--txt2);font-family:monospace;
+  margin-bottom:.65rem;
 }
-.preview-change:hover{background:rgba(0,0,0,.9)}
+
+/* ADD ROW */
 .add-row{display:flex;gap:.5rem;margin-top:.5rem}
 .add-row input{flex:1}
 
@@ -112,7 +116,7 @@ input::placeholder{color:var(--txt3)}
 @keyframes fadein{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
 .vitem-thumb{width:64px;height:36px;object-fit:cover;border-radius:4px;flex-shrink:0;background:var(--bg4)}
 .vitem-title{flex:1;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.vitem-n{font-size:11px;color:var(--txt3);flex-shrink:0}
+.vitem-path{font-size:11px;color:var(--txt3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px}
 .vitem-del{background:none;border:none;cursor:pointer;color:var(--txt3);padding:5px 7px;border-radius:4px;font-size:18px;line-height:1;transition:color .12s}
 .vitem-del:hover{color:var(--red)}
 .empty-state{text-align:center;padding:2rem;color:var(--txt3);font-size:14px;border:1px dashed var(--bord);border-radius:var(--rad)}
@@ -128,6 +132,17 @@ input::placeholder{color:var(--txt3)}
 }
 .step code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-size:12px;color:var(--txt);font-family:monospace}
 .export-row{display:flex;gap:.5rem;flex-wrap:wrap}
+
+/* SNIPPET CARD */
+.snippet-preview{
+  background:var(--bg4);border:1px solid var(--bord);border-radius:var(--rad);
+  padding:10px 12px;font-family:monospace;font-size:12px;color:var(--txt2);
+  white-space:pre;overflow-x:auto;margin-bottom:.75rem;max-height:140px;overflow-y:auto;
+  line-height:1.5;
+}
+.snippet-preview .kw{color:#c792ea}
+.snippet-preview .str{color:#c3e88d}
+.snippet-preview .num{color:#f78c6c}
 
 /* TOAST */
 .toast{
@@ -145,6 +160,7 @@ input::placeholder{color:var(--txt3)}
 @media(max-width:480px){
   body{padding:1rem .75rem 3rem}
   .btn{font-size:13px;padding:8px 12px}
+  .vitem-path{display:none}
 }
 </style>
 </head>
@@ -159,29 +175,38 @@ input::placeholder{color:var(--txt3)}
     <p class="setup-tagline">Panel de carga de miniaturas</p>
   </div>
 
-  <!-- ADD VIDEO -->
+  <!-- ═══════════ AGREGAR VIDEO ═══════════ -->
   <div class="card">
     <div class="card-title">Agregar video</div>
 
-    <div class="upload-zone" id="upload-zone" onclick="triggerUpload()">
-      <div class="upload-icon">🖼️</div>
-      <p class="upload-text"><strong>Arrastrá o hacé clic</strong> para subir miniatura</p>
-      <p class="upload-hint">JPG · PNG · WEBP</p>
-    </div>
-    <input type="file" id="file-input" accept="image/*" onchange="onFileSelected(event)" />
+    <!-- Carpeta de referencia -->
+    <p style="font-size:12px;color:var(--txt2);margin-bottom:.65rem;line-height:1.6">
+      Escribí el nombre del archivo tal como está guardado en la carpeta
+      <span class="folder-hint">📁 miniaturas/</span>
+      de tu proyecto. La miniatura se pre-visualiza automáticamente.
+    </p>
 
-    <div class="preview-wrap" id="preview-wrap">
+    <!-- Input filename -->
+    <label class="lbl">Nombre de archivo</label>
+    <input type="text" id="inp-filename"
+           placeholder="ej: gameplay-minecraft.jpg"
+           autocomplete="off"
+           oninput="schedulePreview()" />
+
+    <!-- Preview -->
+    <div id="preview-area" class="preview-area" style="display:none;margin-top:.6rem">
       <img id="preview-img" alt="preview" />
-      <button class="preview-change" onclick="triggerUpload()">Cambiar imagen</button>
+      <div id="preview-badge" class="preview-badge" style="display:none"></div>
     </div>
 
+    <!-- Título -->
     <div class="add-row">
       <input type="text" id="inp-title" placeholder="Título exacto del video..." />
       <button class="btn solid" onclick="addVideo()">Agregar</button>
     </div>
   </div>
 
-  <!-- VIDEO LIST -->
+  <!-- ═══════════ LISTA DE VIDEOS ═══════════ -->
   <div class="card">
     <div class="card-title">
       Videos guardados
@@ -193,29 +218,34 @@ input::placeholder{color:var(--txt3)}
     <div class="vlist" id="vlist">
       <div class="empty-state">No hay videos. ¡Agregá uno arriba!</div>
     </div>
-    <p class="vlist-hint">Los videos se guardan en este navegador. Exportá el JSON para no perder tu trabajo.</p>
+    <p class="vlist-hint">Los videos se guardan temporalmente en este navegador. Usá los botones de abajo para publicar.</p>
   </div>
 
-  <!-- PUBLISH -->
+  <!-- ═══════════ PUBLICAR ═══════════ -->
   <div class="card">
     <div class="card-title">Publicar en GitHub Pages</div>
     <div class="deploy-steps">
       <div class="step">
         <span class="step-n">1</span>
-        <span>Hacé clic en <strong style="color:var(--txt)">Exportar data.json</strong> y guardá el archivo descargado</span>
+        <span>Tus imágenes ya están en la carpeta <code>miniaturas/</code> del proyecto. ¡Eso es todo lo que necesitás!</span>
       </div>
       <div class="step">
         <span class="step-n">2</span>
-        <span>Subí <code>data.json</code> a la <strong style="color:var(--txt)">raíz</strong> de tu repositorio (donde está <code>index.html</code>)</span>
+        <span>Agregá cada video arriba (nombre de archivo + título). Luego hacé clic en <strong style="color:var(--txt)">Copiar snippet JS</strong>.</span>
       </div>
       <div class="step">
         <span class="step-n">3</span>
-        <span>¡Listo! Los jugadores verán tus videos automáticamente</span>
+        <span>Abrí <code>index.html</code>, encontrá el bloque <code>VIDEOS_DATA = [...]</code> y reemplazalo con el snippet copiado.</span>
+      </div>
+      <div class="step">
+        <span class="step-n">4</span>
+        <span>Alternativamente, exportá <code>data.json</code> y subilo a la raíz del repo. Los jugadores ven todo automáticamente sin cargar nada.</span>
       </div>
     </div>
     <div class="export-row">
-      <button class="btn solid" id="export-btn" onclick="exportJSON()" disabled>⬇ Exportar data.json</button>
-      <button class="btn ghost" onclick="triggerImport()">⬆ Importar data.json</button>
+      <button class="btn solid" id="snippet-btn" onclick="copySnippet()" disabled>📋 Copiar snippet JS</button>
+      <button class="btn" id="export-btn" onclick="exportJSON()" disabled>⬇ Exportar data.json</button>
+      <button class="btn ghost" onclick="triggerImport()">⬆ Importar</button>
       <input type="file" id="import-input" accept=".json,application/json" style="display:none" onchange="importJSON(event)">
     </div>
   </div>
@@ -226,7 +256,7 @@ input::placeholder{color:var(--txt3)}
 
 <script>
 let videos = [];
-let pendingImage = null;
+let previewTimer = null;
 
 // ===================== STORAGE =====================
 function loadFromStorage() {
@@ -244,79 +274,91 @@ function saveToStorage() {
     localStorage.setItem('thumbblind_videos', JSON.stringify(videos));
   } catch(e) {
     if (e.name === 'QuotaExceededError') {
-      alert('⚠️ Almacenamiento local lleno.\nNo se pudo guardar. Exportá el JSON y eliminá algunos videos para liberar espacio.');
+      alert('⚠️ Almacenamiento local lleno.\nExportá el JSON y eliminá algunos videos para liberar espacio.');
     }
   }
 }
 
-// ===================== UPLOAD =====================
-function triggerUpload() {
-  document.getElementById('file-input').click();
+// ===================== FILENAME PREVIEW =====================
+function schedulePreview() {
+  clearTimeout(previewTimer);
+  const val = document.getElementById('inp-filename').value.trim();
+  if (!val) {
+    document.getElementById('preview-area').style.display = 'none';
+    return;
+  }
+  previewTimer = setTimeout(loadPreview, 450);
 }
 
-function onFileSelected(e) {
-  const file = e.target.files[0];
-  if (file) processFile(file);
-  e.target.value = '';
-}
+function loadPreview() {
+  const filename = document.getElementById('inp-filename').value.trim();
+  if (!filename) return;
 
-function processFile(file) {
-  const reader = new FileReader();
-  reader.onload = e => {
-    resizeImage(e.target.result, 720, 405, b64 => {
-      pendingImage = b64;
-      document.getElementById('preview-img').src = b64;
-      document.getElementById('preview-wrap').style.display = 'block';
-      document.getElementById('upload-zone').style.display = 'none';
-      document.getElementById('inp-title').focus();
-    });
-  };
-  reader.readAsDataURL(file);
-}
+  const area   = document.getElementById('preview-area');
+  const img    = document.getElementById('preview-img');
+  const badge  = document.getElementById('preview-badge');
 
-function resizeImage(src, maxW, maxH, cb) {
-  const img = new Image();
+  area.style.display = 'block';
+  badge.style.display = 'none';
+  img.src = './miniaturas/' + filename;
+
   img.onload = () => {
-    const scale = Math.min(maxW / img.width, maxH / img.height, 1);
-    const w = Math.round(img.width * scale);
-    const h = Math.round(img.height * scale);
-    const c = document.createElement('canvas');
-    c.width = w; c.height = h;
-    c.getContext('2d').drawImage(img, 0, 0, w, h);
-    cb(c.toDataURL('image/jpeg', 0.88));
+    badge.className = 'preview-badge ok';
+    badge.textContent = '✓ imagen encontrada';
+    badge.style.display = 'block';
   };
-  img.src = src;
+  img.onerror = () => {
+    badge.className = 'preview-badge err';
+    badge.textContent = '⚠ no encontrada en miniaturas/';
+    badge.style.display = 'block';
+  };
 }
 
-// Drag & drop
-const uploadZone = document.getElementById('upload-zone');
-uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag'); });
-uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag'));
-uploadZone.addEventListener('drop', e => {
-  e.preventDefault();
-  uploadZone.classList.remove('drag');
-  const f = e.dataTransfer.files[0];
-  if (f && f.type.startsWith('image/')) processFile(f);
-});
-
+// ===================== ADD / REMOVE =====================
 function addVideo() {
-  const title = document.getElementById('inp-title').value.trim();
-  if (!pendingImage) { pulse('upload-zone'); return; }
-  if (!title) { document.getElementById('inp-title').focus(); return; }
+  const filename = document.getElementById('inp-filename').value.trim();
+  const title    = document.getElementById('inp-title').value.trim();
 
-  videos.push({ id: Date.now(), title, image: pendingImage });
-  pendingImage = null;
+  if (!filename) {
+    pulse('inp-filename');
+    document.getElementById('inp-filename').focus();
+    return;
+  }
+  if (!title) {
+    document.getElementById('inp-title').focus();
+    return;
+  }
 
+  // Evitar duplicados por nombre de archivo
+  const path = './miniaturas/' + filename;
+  if (videos.some(v => v.image === path)) {
+    if (!confirm(`"${filename}" ya está en la lista. ¿Agregarlo de todas formas?`)) return;
+  }
+
+  videos.push({ id: Date.now(), title, image: path });
+
+  // Reset UI
+  document.getElementById('inp-filename').value = '';
   document.getElementById('inp-title').value = '';
-  document.getElementById('preview-wrap').style.display = 'none';
-  document.getElementById('upload-zone').style.display = 'block';
+  document.getElementById('preview-area').style.display = 'none';
+  document.getElementById('preview-badge').style.display = 'none';
 
   saveToStorage();
   renderVList();
   updateBtns();
+  showToast('✓ ' + title);
+  document.getElementById('inp-filename').focus();
 }
 
-document.getElementById('inp-title').addEventListener('keydown', e => { if (e.key === 'Enter') addVideo(); });
+// Enter en filename → pasar al título
+document.getElementById('inp-filename').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('inp-title').focus();
+});
+
+// Enter en título → agregar
+document.getElementById('inp-title').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addVideo();
+});
 
 function removeVideo(id) {
   videos = videos.filter(v => v.id !== id);
@@ -343,9 +385,10 @@ function renderVList() {
   }
   list.innerHTML = videos.map((v, i) => `
     <div class="vitem">
-      <img class="vitem-thumb" src="${v.image}" alt="" />
+      <img class="vitem-thumb" src="${v.image}" alt=""
+           onerror="this.style.opacity='.25'" />
       <span class="vitem-title">${esc(v.title)}</span>
-      <span class="vitem-n">#${i + 1}</span>
+      <span class="vitem-path">${esc(v.image)}</span>
       <button class="vitem-del" onclick="removeVideo(${v.id})" title="Eliminar">×</button>
     </div>
   `).join('');
@@ -353,8 +396,9 @@ function renderVList() {
 
 function updateBtns() {
   const has = videos.length > 0;
-  document.getElementById('export-btn').disabled = !has;
-  document.getElementById('clear-btn').disabled = !has;
+  document.getElementById('export-btn').disabled  = !has;
+  document.getElementById('snippet-btn').disabled = !has;
+  document.getElementById('clear-btn').disabled   = !has;
 }
 
 function pulse(id) {
@@ -363,10 +407,37 @@ function pulse(id) {
   setTimeout(() => el.style.borderColor = '', 700);
 }
 
+// ===================== SNIPPET JS =====================
+function copySnippet() {
+  if (!videos.length) return;
+
+  const entries = videos.map(v =>
+    `  { id: ${v.id}, title: ${JSON.stringify(v.title)}, image: ${JSON.stringify(v.image)} }`
+  ).join(',\n');
+
+  const snippet =
+    `// Generado por admin.html — pegá esto en index.html\n` +
+    `const VIDEOS_DATA = [\n${entries}\n];`;
+
+  navigator.clipboard.writeText(snippet)
+    .then(() => showToast('✓ Snippet copiado — pegalo en index.html'))
+    .catch(() => {
+      // Fallback por si clipboard está bloqueado (algunos navegadores locales)
+      const ta = document.createElement('textarea');
+      ta.value = snippet;
+      ta.style.cssText = 'position:fixed;opacity:0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('✓ Snippet copiado — pegalo en index.html');
+    });
+}
+
 // ===================== EXPORT / IMPORT =====================
 function exportJSON() {
   if (!videos.length) return;
-  const blob = new Blob([JSON.stringify(videos)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify(videos, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -406,6 +477,7 @@ function importJSON(e) {
   e.target.value = '';
 }
 
+// ===================== TOAST =====================
 function showToast(msg) {
   const t = document.createElement('div');
   t.className = 'toast';
