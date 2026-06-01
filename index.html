@@ -345,6 +345,28 @@ label.lbl{display:block;font-size:12px;color:var(--txt2);margin-bottom:5px;lette
 </div><!-- #app -->
 
 <script>
+// ╔═══════════════════════════════════════════════════════════════╗
+// ║              VIDEOS PRECARGADOS — EDITÁ AQUÍ                 ║
+// ║  Agregá una línea por cada video de la carpeta miniaturas/   ║
+// ║  Generá este bloque fácilmente desde admin.html              ║
+// ╚═══════════════════════════════════════════════════════════════╝
+// Generado por admin.html — pegá esto en index.html
+const VIDEOS_DATA = [
+  { id: 1780276290137, title: "¡ME PASE MINECRAFT PERO SOY UN LORO!", image: "./miniaturas/¡ME PASE MINECRAFT PERO SOY UN LORO!.jpg" },
+  { id: 1780276386046, title: "BEDWARS en 2025 esta PRIME", image: "./miniaturas/BEDWARS en 2025 esta PRIME.jpg" },
+  { id: 1780276394565, title: "El CHAT me PIDE HAMBURGUESAS 🍔", image: "./miniaturas/El CHAT me PIDE HAMBURGUESAS 🍔.jpg" },
+  { id: 1780276406346, title: "El ultimo en sentarse GANA $100", image: "./miniaturas/El ultimo en sentarse GANA $100.jpg" },
+  { id: 1780276423698, title: "Este VIDEO fue EDITADO por un SUSCRIPTOR", image: "./miniaturas/Este VIDEO fue EDITADO por un SUSCRIPTOR.jpg" },
+  { id: 1780276436385, title: "HICE UN TORNEO de REMATCH", image: "./miniaturas/HICE UN TORNEO de REMATCH.jpg" },
+  { id: 1780276448091, title: "La TIENDA es INVISIBLE en BEDWARS", image: "./miniaturas/La TIENDA es INVISIBLE en BEDWARS.jpg" },
+  { id: 1780276456713, title: "Me vendieron medias en mi viaje a Chile", image: "./miniaturas/Me vendieron medias en mi viaje a Chile.jpg" },
+  { id: 1780276465549, title: "Mi renegade - Azuk, Lau1k (Visualizer)", image: "./miniaturas/Mi renegade - Azuk, Lau1k (Visualizer).jpg" },
+  { id: 1780276479270, title: "REMATCH es MUY BUENO", image: "./miniaturas/REMATCH es MUY BUENO.jpg" },
+  { id: 1780276486884, title: "Reviviendo Brawl Stars", image: "./miniaturas/Reviviendo Brawl Stars.jpg" },
+  { id: 1780276565414, title: "ROAD TO ELITE en REMATCH", image: "./miniaturas/ROAD TO ELITE en REMATCH.jpg" }
+];
+// ═══════════════════════════════════════════════════════════════
+
 // ===================== DATA =====================
 let videos = [];
 
@@ -385,7 +407,14 @@ async function loadVideos() {
   showSetupState('loading');
   videos = [];
 
-  // 1) Try fetching data.json from the same origin (GitHub Pages)
+  // 1) Videos precargados en el código (prioridad máxima, funciona offline y en GitHub Pages)
+  if (VIDEOS_DATA.length > 0) {
+    videos = VIDEOS_DATA;
+    showSetupState('ready');
+    return;
+  }
+
+  // 2) Fallback: data.json en el servidor (compatible con el sistema anterior)
   try {
     const res = await fetch('./data.json');
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -396,10 +425,10 @@ async function loadVideos() {
       return;
     }
   } catch(e) {
-    // fetch failed or empty — fall through to localStorage
+    // Sin data.json, continuar
   }
 
-  // 2) Fallback: localStorage (useful for local testing)
+  // 3) Fallback: localStorage (útil para pruebas locales con admin.html)
   try {
     const saved = localStorage.getItem('thumbblind_videos');
     if (saved) {
@@ -412,7 +441,7 @@ async function loadVideos() {
     }
   } catch(e) {}
 
-  // 3) Nothing found
+  // 4) Sin datos
   showSetupState('empty');
 }
 
@@ -540,7 +569,6 @@ function onGuessInput() {
   const matches = gameQueue.filter(v => v.title.toLowerCase().includes(q)).slice(0, 6);
   if (!matches.length) { ac.classList.remove('show'); return; }
 
-  // Solo muestra el título — sin miniatura
   ac.innerHTML = matches.map(v => `
     <div class="ac-item" onclick="pickSuggestion(${v.id})">
       ${esc(v.title)}
